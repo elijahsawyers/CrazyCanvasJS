@@ -1,0 +1,18 @@
+body {
+    background-color: #f2f6f9;
+}
+
+#header {
+    color: #054f7c;
+    text-align: center;
+    margin: 0 auto;
+    padding: 25px;
+    font-family: 'Righteous', cursive;
+    font-size: 40pt;
+}
+
+#PDFFrame {
+    width: 100%;
+    height: 100%;
+    border: 1px solid black;
+}
