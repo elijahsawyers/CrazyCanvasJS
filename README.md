@@ -1,28 +1,14 @@
 # PDFGraphmaticJS
 
-Visually create graphs on top of a PDF file.
+Visually create graphs on top of a PNG image.
 
 ## Prerequisites
 
-Ensure that you have ImageMagick and Ghostscript installed. If not, follow the installation steps on their websites.
-
-## Setup
-
-Create a virtual environment, install Wand, setup the FLASK_APP variable, and start the Flask server.
-
-'''
-python3 -m venv venv
-. venv/bin/activate
-pip install Wand
-export FLASK_APP=app.py
-flask run
-'''
+Ensure that you are running this in a modern web browser.
 
 ## Build With
 
-* [GhostScript](https://www.ghostscript.com/)
-* [ImageMagic](https://www.imagemagick.org/)
-* [Wand](http://docs.wand-py.org/en/0.4.1/index.html)
+* [HTML Canvas](https://developer.mozilla.org/en-US/docs/Glossary/Canvas)
 
 ## Authors
 

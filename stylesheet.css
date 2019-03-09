@@ -11,8 +11,6 @@ body {
     font-size: 40pt;
 }
 
-#PDFFrame {
-    width: 100%;
-    height: 100%;
+#PDFCanvas {
     border: 1px solid black;
 }
