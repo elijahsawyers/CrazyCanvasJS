@@ -1,6 +1,6 @@
 # PDFGraphmaticJS
 
-Visually create graphs on top of a PNG image.
+Draw images and other objects onto a canvas with the ability to pan and scroll around.
 
 ## Prerequisites
 
