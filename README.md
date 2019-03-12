@@ -1,4 +1,4 @@
-# PDFGraphmaticJS
+# CrazyCanvasJS
 
 Draw images and other objects onto a canvas with the ability to pan and scroll around.
 
