@@ -3,6 +3,8 @@
  * @author Elijah Sawyers <elijahsawyers@gmail.com>
  */
 
+ import {PNG} from "./PNG.js";
+
 /** The main function for our simple application. */ 
 function main() {
     // Grab the canvas and set its height/width (maintaining the 2:1 ratio).
@@ -16,11 +18,11 @@ function main() {
     }
 
     // Initialize the canvas and all of its events.
-    initializeCanvas(ctx, "test.png");
+    initializeCanvas(ctx, "../static/images/chalkboard.png");
 }
 
 /**
- * This function initializes the canvas for drawing.
+ * This function initializes the canvas for drawing and sets up event handlers.
  * @param {CanvasRenderingContext2D} ctx: The 2d drawing context.
  * @param {string} src: The path to the png image to be drawn onto.
  */
@@ -50,9 +52,22 @@ function initializeCanvas(ctx, src) {
         ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
     }
 
+    // Represents the states of the canvas.
+    const states = {
+        drawingPoints: 0,
+        drawingLines: 1,
+        panning: 2
+    };
+
+    // Stores the current state of the canvas (initially panning).
+    let state = states.panning;
+
+    // Store all objects drawn on the canvas.
+    let points = [];
+
     // Maintain 2:1 ratio, even when the window resizes.
     window.onresize = () => {
-        // Grab the previous ctx transform.
+        // Grab the previous ctx transform (can't use ctx.save because resizing the canvas clears the cache).
         let t = ctx.getTransform();
 
         // Changing the width and height of the canvas resets the context...
@@ -74,6 +89,15 @@ function initializeCanvas(ctx, src) {
     let mouseLocation = {
         x: 0,
         y: 0
+    }
+    
+    // Handle cursor style.
+    ctx.canvas.style.cursor = "grab";
+    ctx.canvas.onmousedown = (e) => {
+        ctx.canvas.style.cursor = "grabbing";
+    }
+    ctx.canvas.onmouseup = (e) => {
+        ctx.canvas.style.cursor = "grab";
     }
     
     // Setup pan event listenters.
@@ -98,8 +122,12 @@ function initializeCanvas(ctx, src) {
         }
     }
 
-    // Setup scroll event listener.
+    // Setup zoom event listener.
+    var scrollingTimer;
     ctx.canvas.onmousewheel = (e) => {
+        // Change the cursor style.
+        ctx.canvas.style.cursor = "ns-resize";
+
         // Zoom in.
         if (e.deltaY > 0) {
             // Clear the canvas.
@@ -140,6 +168,14 @@ function initializeCanvas(ctx, src) {
             // Redraw the image based on the new scale.
             ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
         }
+
+        // Change the cursor style when scrolling stops.
+        if(scrollingTimer !== null) {
+            clearTimeout(scrollingTimer);        
+        }
+        scrollingTimer = setTimeout(function() {
+            ctx.canvas.style.cursor = "grab";
+        }, 100);
     }
 }
 
@@ -155,42 +191,6 @@ function canvasPointToGridPoint(ctx, x, y) {
         x: ((x - t.e) / t.a),
         y: ((y - t.f) / t.d)
     };
-}
-
-/** 
- * Class representing a PNG image to be displayed in a canvas.
- * @extends Image 
- */
-class PNG extends Image {
-    /** 
-     * Creates a PNG image positioned at canvas location (0, 0).
-     * @param {string} src: The path to the png.
-     */
-    constructor(src) {
-        super();
-        this.src = src;
-        this.canvasX = 0;
-        this.canvasY = 0;
-    }
-
-    /** 
-     * Scales the PNG image by some factor. 
-     * @param {number} factor: The factor to scale the PNG by.
-     */
-    scale(factor) {
-        this.width *= factor;
-        this.height *= factor;
-    }
-
-    /** 
-     * Update the stored location of the PNG image, if you change it in the canvas. 
-     * @param {number} x: The new x-value on the canvas where the PNG is drawn.
-     * @param {number} y: The new y-value on the canvas where the PNG is drawn.
-     */
-    changeLocation(x, y) {
-        this.canvasX = x;
-        this.canvasY = y;
-    }
 }
 
 // Start executing after the page loads.

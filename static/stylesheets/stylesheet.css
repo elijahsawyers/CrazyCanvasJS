@@ -1,0 +1,58 @@
+body {
+    background-color:#eee;
+}
+
+#header {
+    color: 	#71815f;
+    text-align: center;
+    margin: 0 auto;
+    padding: 25px;
+    font-family: 'Righteous', cursive;
+    font-size: 40pt;
+}
+
+#toolbox {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.07);
+    margin: 25px;
+    background: #fff;
+    border-radius: 5px;
+    color: #4A5056;
+}
+
+#toolbox p {
+    margin: 0px;
+    padding: 10px;
+    transition: 0.3s;
+}
+
+#toolbox p:hover {
+    background: #71815f;
+    color: #fff;
+}
+
+.button p {
+    border: 1px solid #CFD4D9;
+}
+
+#point {
+    border-radius: 5px 5px 0px 0px;
+    border-bottom: 0px;
+}
+
+#line {
+    border-radius: 0px 0px 5px 5px;
+}
+
+#PDFCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    border: 1px solid #aaa;
+    margin: 0px auto;
+    background: #fff;
+}
