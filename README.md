@@ -1,6 +1,6 @@
 # CrazyCanvasJS
 
-Draw images and other objects onto a canvas with the ability to pan around and zoom.
+Draw images, points, and lines onto a canvas with the ability to pan around and zoom.
 
 ## Prerequisites
 
