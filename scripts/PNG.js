@@ -1,3 +1,8 @@
+/**
+ * @file Image helper.
+ * @author Elijah Sawyers <elijahsawyers@gmail.com>
+ */
+
 /** 
  * Class representing a PNG image to be displayed in a canvas.
  * @extends Image 

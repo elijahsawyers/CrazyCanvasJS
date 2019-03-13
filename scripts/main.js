@@ -1,10 +1,11 @@
 /**
- * @file Manages drawing functionality for the canvas
+ * @file Manages the main functionality for the canvas
  * @author Elijah Sawyers <elijahsawyers@gmail.com>
  */
 
  import {PNG} from "./PNG.js";
  import {Point, redrawPoints} from "./draw.js";
+ import {canvasPointToGridPoint} from "./coordinateHelper.js";
 
 // Start executing after the page loads.
 window.onload = main;
@@ -16,7 +17,7 @@ function main() {
     canvas.width = canvas.parentElement.clientWidth;
     canvas.height = canvas.width/2;
 
-    // Initialize the canvas and all of its events.
+    // Initialize the canvas, its events, and enable drawing functionality.
     initializeCanvasWithImage(canvas, "../static/images/chalkboard.png");
 }
 
@@ -28,8 +29,8 @@ function main() {
  */
 function initializeCanvasWithImage(canvas, src) {
 
-    // Grab the context.
-    let ctx = canvas.getContext("2d");
+    // Set initial cursor style.
+    canvas.style.cursor = "grab";
 
     //====================================================================================================
     // DOM Elements
@@ -48,15 +49,72 @@ function initializeCanvasWithImage(canvas, src) {
     // Local Variables
     //====================================================================================================
 
+    // Grab the 2d context of the canvas.
+    let ctx = canvas.getContext("2d");
+
     // The image that's drawn onto the canvas.
     let png = new PNG(src);
 
-    
+    // The cursor's location on the canvas.
+    let cursorLocation = {
+        x: 0,
+        y: 0
+    }
+
+    // Tells if a point is currently grabbed.
+    let latched = false;
+
+    // The point that is being grabbed.
+    let latchedPoint = {
+        point: null,
+        index: null
+    };
+
+    // Timer to determine if the user is scrolling.
+    var scrollingTimer = null;
+
+    // Represents the different states of the canvas.
+    const states = {
+        drawingPoints: 0,
+        drawingLines: 1,
+        panning: 2
+    };
+
+    // Stores the current state of the canvas (initially panning).
+    let state = states.panning;
+
+    // Store all points drawn onto the canvas.
+    let points = [];
+
+    //====================================================================================================
+    // Event Listeners
+    //====================================================================================================
+
+    // Resizes the canvas, maintaining 2:1 ratio, and redraws everything.
+    window.onresize = () => {
+        // Grab the previous ctx transform (can't use ctx.save because resizing the canvas clears the cache).
+        let t = ctx.getTransform();
+
+        //...therefore, we have to...
+        // ...clear the canvas...
+        clearCanvas(ctx);
+
+        // ...change the width and height of the canvas...
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.width/2;
+
+        // ...translate and scale the grid by the previous transform...
+        ctx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
+
+        // ...redraw the image based on the new origin...
+        ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
+
+        // ...and lastly, redraw the points and lines.
+        redrawPoints(points);
+    }
 
     // Load in the PNG image, and draw it when it loads.
     png.onload = () => {
-        clearCanvas(ctx);
-
         // Scale the image so that it displays as big as possible in the canvas.
         if (Math.min(png.width, png.height) == png.width) {
             if (png.width < canvas.width) {
@@ -78,57 +136,13 @@ function initializeCanvasWithImage(canvas, src) {
         // Draw the image on the canvas.
         ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
     }
-
-    // Maintain 2:1 canvas ratio, even when the window resizes.
-    window.onresize = () => {
-        // Grab the previous ctx transform (can't use ctx.save because resizing the canvas clears the cache).
-        let t = ctx.getTransform();
-
-        //...therefore, we have to...
-        // ...clear the canvas...
-        clearCanvas(ctx);
-
-        // Changing the width and height of the canvas resets the context...
-        canvas.width = canvas.parentElement.clientWidth;
-        canvas.height = canvas.width/2;
-
-        // ...translate and scale the grid by the previous transform...
-        ctx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
-
-        // ...redraw the image based on the new origin...
-        ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
-
-        // ...and lastly, redraw the points and lines.
-        redrawPoints(points);
-    }
-
-    //====================================================================================================
-    // Cursor
-    //====================================================================================================
-
-    // Stores the cursor's location.
-    let cursorLocation = {
-        x: 0,
-        y: 0
-    }
-    
-    // Handle cursor style.
-    canvas.style.cursor = "grab";
-
-    //====================================================================================================
-    // Event Listeners
-    //====================================================================================================
     
     /* 
         Setup mousemove event listenter.
         Used for panning and storing the cursor's location.
     */
-    let latched = false;
-    let latchedPoint = {
-        point: null,
-        index: null
-    };
     canvas.onmousemove = (e) => {
+        // If the cursor is over the trashcan, restyle it.
         if ((cursorLocation.x >= canvas.width - 50 && cursorLocation.x <= canvas.width - 10) && (cursorLocation.y >= 10 && cursorLocation.y <= 50)) {
             trashcan.style.background = "#B22222";
             trashcan.style.color = "#fff";
@@ -141,12 +155,16 @@ function initializeCanvasWithImage(canvas, src) {
         cursorLocation.x = e.offsetX;
         cursorLocation.y = e.offsetY;
 
+        // If a point is being grabbed, don't pan; instead, move the point by the mouse movement.
         if (latched) {
+            // Set the curser to indicate a point is grabbed.
             canvas.style.cursor = "grabbing";
             
-            if (latchedPoint != null) {
-                latchedPoint.point.updateLocation(latchedPoint.point.x + (e.movementX / ctx.getTransform().a), latchedPoint.point.y + (e.movementY / ctx.getTransform().d));
-            }
+            /* 
+                Move the latched point by the result of dividing the mouse movement by scale.
+                Diving by the scale causes the movement speed to be slower the more that you zoom in.
+            */
+            latchedPoint.point.updateLocation(latchedPoint.point.x + (e.movementX / ctx.getTransform().a), latchedPoint.point.y + (e.movementY / ctx.getTransform().d));
 
             // Clear the canvas.
             clearCanvas(ctx);
@@ -154,10 +172,11 @@ function initializeCanvasWithImage(canvas, src) {
             // Redraw the image.
             ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
 
+            // Redraw all points.
             redrawPoints(points);
         }
 
-        // If the mouse is click, pan.
+        // If the mouse is clicked and the state is "panning," pan the canvas.
         if (e.which == 1 && state == states.panning) {
             // Clear the canvas.
             clearCanvas(ctx);
@@ -168,9 +187,10 @@ function initializeCanvasWithImage(canvas, src) {
             */
             ctx.translate(e.movementX / ctx.getTransform().a, e.movementY / ctx.getTransform().d);
 
-            // Redraw the image based on the new origin.
+            // Redraw the image.
             ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
 
+            // Redraw all points.
             redrawPoints(points);
         }
     }
@@ -179,9 +199,8 @@ function initializeCanvasWithImage(canvas, src) {
         Setup mousewheel event listener.
         Used for zooming.
     */
-    var scrollingTimer;
     canvas.onmousewheel = (e) => {
-        // Change the cursor style.
+        // Set the curser to indicate zoom.
         canvas.style.cursor = "ns-resize";
 
         // Zoom in.
@@ -201,7 +220,7 @@ function initializeCanvasWithImage(canvas, src) {
             // Translate by the displacement of the mouse's location.
             ctx.translate(mouseAfterScale.x - mouseBeforeScale.x, mouseAfterScale.y - mouseBeforeScale.y);
 
-            // Redraw the image based on the new scale.
+            // Redraw the image.
             ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
         }
         // Zoom out.
@@ -221,13 +240,14 @@ function initializeCanvasWithImage(canvas, src) {
             // Translate by the displacement of the mouse's location.
             ctx.translate(mouseAfterScale.x - mouseBeforeScale.x, mouseAfterScale.y - mouseBeforeScale.y);
 
-            // Redraw the image based on the new scale.
+            // Redraw the image.
             ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
         }
 
+        // Redraw all points.
         redrawPoints(points);
 
-        // Change the cursor style when scrolling stops.
+        // Use a timer to determine if zooming has stopped, and if so, set the curser to indicate zooming has stopped.
         if(scrollingTimer !== null) {
             clearTimeout(scrollingTimer);        
         }
@@ -245,11 +265,17 @@ function initializeCanvasWithImage(canvas, src) {
         Used for drawing points and dragging points.
     */
     canvas.onmousedown = (e) => {
+        // Calculate the mouse pointer's location in the grid's coordinate system.
         let cursorGridPoint = canvasPointToGridPoint(ctx, cursorLocation.x, cursorLocation.y);
+
+        // If the state is "panning," set the curser to indicate panning.
         if (state == states.panning) {
             canvas.style.cursor = "grabbing";
         } 
+
+        // If the state is "drawingPoints:"
         if (state == states.drawingPoints) {
+            // Determine if the clicked mouse point contains a point, if so, latch onto the point...
             for (let i = 0; i < points.length; i++) {
                 if (cursorGridPoint.x <= points[i].x + 5 && cursorGridPoint.x >= points[i].x - 5) {
                     if (cursorGridPoint.y <= points[i].y + 5 && cursorGridPoint.y >= points[i].y - 5) {
@@ -260,6 +286,7 @@ function initializeCanvasWithImage(canvas, src) {
                     }
                 }
             }
+            // ...otherwise, create a new point at that location, and draw it.
             let newPoint = new Point(ctx, cursorGridPoint.x, cursorGridPoint.y);
             points.push(newPoint);
             newPoint.draw();
@@ -268,25 +295,37 @@ function initializeCanvasWithImage(canvas, src) {
 
     /*
         Setup mouseup event listener.
-        Used for drawing.
+        Used for drawing or deleting points.
     */
     canvas.onmouseup = (e) => {
+        // If the cursor is released over the trashcan while latched onto a point, delete it.
         if (cursorLocation.x >= canvas.width - 50 && cursorLocation.x <= canvas.width - 10) {
             if (cursorLocation.y >= 10 && cursorLocation.y <= 50) {
-                points.splice(latchedPoint.index, 1);
-                // Clear the canvas.
-                clearCanvas(ctx);
+                if (latched) {
+                    // Remove the point from the points array.
+                    points.splice(latchedPoint.index, 1);
 
-                // Redraw the image.
-                ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
+                    // Clear the canvas.
+                    clearCanvas(ctx);
 
-                redrawPoints(points);
+                    // Redraw the image.
+                    ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
+
+                    // Redraw all points.
+                    redrawPoints(points);
+                }
             }
         }
 
+        // If the state is "panning," reset the cursor so that it's no longer grabbing.
         if (state == states.panning) {
             canvas.style.cursor = "grab";
-        } else if (state == states.drawingPoints) {
+        }
+        /* 
+            If the state is "drawingPoints," reset the cursor so that it's no longer grabbing, 
+            reset latched point, and indicate that you're no longer latched. 
+        */
+        else if (state == states.drawingPoints) {
             canvas.style.cursor = "pointer";
             latched = false;
             latchedPoint.point = null;
@@ -294,6 +333,10 @@ function initializeCanvasWithImage(canvas, src) {
         }
     }
 
+    /*
+        Setup mouseleave event listener.
+        Used for reseting misc. styles.
+    */
     canvas.onmouseleave = (e) => {
         if (state == states.drawingPoints) {
             latched = false;
@@ -303,20 +346,10 @@ function initializeCanvasWithImage(canvas, src) {
         trashcan.style.color = "#4A5056";
     }
 
-    // Represents the states of the canvas.
-    const states = {
-        drawingPoints: 0,
-        drawingLines: 1,
-        panning: 2
-    };
-
-    // Stores the current state of the canvas (initially panning).
-    let state = states.panning;
-
-    // Store all objects drawn on the canvas.
-    let points = [];
-
-    // Change state when the point button is clicked.
+    /*
+        Setup pointButton onclick event listener.
+        Used for changing state.
+    */
     pointButton.onclick = (e) => {
         if (state != states.drawingPoints) {
             state = states.drawingPoints;
@@ -333,7 +366,10 @@ function initializeCanvasWithImage(canvas, src) {
         }
     }
 
-    // Change state when the line button is clicked.
+    /*
+        Setup lineButton onclick event listener.
+        Used for changing state.
+    */
     lineButton.onclick = (e) => {
         if (state != states.drawingLines) {
             state = states.drawingLines;
@@ -356,24 +392,10 @@ function initializeCanvasWithImage(canvas, src) {
 //====================================================================================================
 
 /**
- * Converts a point in the canvas to the corresponding grid point.
- * @param {CanvasRenderingContext2D} ctx: The grid to convert to.
- * @param {number} x: The x-value of the canvas point.
- * @param {number} y: The y-value of the canvas point.
- */
-function canvasPointToGridPoint(ctx, x, y) {
-    let t = ctx.getTransform();
-    return {
-        x: ((x - t.e) / t.a),
-        y: ((y - t.f) / t.d)
-    };
-}
-
-/**
  * Clears the entire canvas, regardless of transform.
  * @param {CanvasRenderingContext2D} ctx: The ctx of the canvas to clear.
  */
-function clearCanvas(ctx) {
+export function clearCanvas(ctx) {
     ctx.save();
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
