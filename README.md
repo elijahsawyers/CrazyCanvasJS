@@ -4,7 +4,7 @@ Draw images and other objects onto a canvas with the ability to pan around and z
 
 ## Prerequisites
 
-Ensure that you are running this in a modern web browser.
+Ensure that you are running this in a modern web browser, and because the JavaScript code is using ES6 imports and exports, you'll need to setup a local server. I recommend using [http-server](https://www.npmjs.com/package/http-server).
 
 ## Build With
 
