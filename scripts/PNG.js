@@ -11,12 +11,14 @@ export class PNG extends Image {
     /** 
      * Creates a PNG image positioned at canvas location (0, 0).
      * @param {string} src: The path to the png.
+     * @param {CanvasRenderingContext2D} src: The ctx to draw onto.
      */
-    constructor(src) {
+    constructor(src, ctx) {
         super();
         this.src = src;
         this.canvasX = 0;
         this.canvasY = 0;
+        this.ctx = ctx;
     }
 
     /** 
