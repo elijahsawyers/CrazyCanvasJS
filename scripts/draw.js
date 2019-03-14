@@ -7,31 +7,24 @@
 export class Point {
     /** 
      * Creates a point positioned at the specified canvas location.
-     * @param {CanvasRenderingContext2D} ctx: The ctx to draw onto.
      * @param {number} x: The x-value of the point.
      * @param {number} x: The y-value of the point.
      */
     constructor(ctx, x, y) {
-        this.ctx = ctx;
         this.x = x;
         this.y = y;
         this.radius = 5;
-        this.fill = false;
+        this.connections = []
     }
 
     /**
      * Draws the point onto the canvas.
      */
-    draw() {
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-        this.ctx.fillStyle = "red";
-        this.ctx.strokeStyle = "red";
-        if (this.fill) {
-            this.ctx.fill();
-        } else {
-            this.ctx.stroke();
-        }
+    draw(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+        ctx.fillStyle = "red";
+        ctx.fill();
     }
 
     /**
@@ -44,14 +37,80 @@ export class Point {
         this.x = x;
         this.y = y;
     }
+
+    /**
+     * Add a connection to another point.
+     * @param {Point} point: The point to add a connection to. 
+     */
+    addConnection(point) {
+        this.connections.push(point);
+    }
+}
+
+/** Class that represents a connection between two points. */
+export class Connection {
+    /**
+     * Creates a connection between two points.
+     * @param {Point} a: The point "A" of the connection.
+     * @param {Point} b: The point "B" of the connection.
+     */
+    constructor(a, b) {
+        this.a = a;
+        this.b = b;
+    }
 }
 
 /**
- * Draw Points onto their canvas.
+ * Redraw the image, points, and connections on the canvas.
+ * @param {CanvasRenderingContext2D} ctx: The context to redraw.
+ * @param {PNG} image: The png image to redraw.
  * @param {Array} points: The array of Point objects to draw.
+ * @param {Point} deletedPoint: If a point was deleted, pass it here when redrawing.
  */
-export function redrawPoints(points) {
+export function redraw(ctx, image, points, deletedPoint = null) {
+    // Clear the canvas.
+    clearCanvas(ctx);
+
+    // Redraw the image.
+    ctx.drawImage(image, image.canvasX, image.canvasY, image.width, image.height);
+
+    // Loop over the points.
     for (let i = 0; i < points.length; i++) {
-        points[i].draw();
+        // Draw the current point.
+        points[i].draw(ctx);
+
+        // Loop over the current point's connections.
+        let indexOfConnectionToDelete = -1;
+        for (let j = 0; j < points[i].connections.length; j++) {
+            // If the current point has a connection to the deleted point...
+            if (points[i].connections[j] === deletedPoint) {
+                // ...set the connection to be deleted, and don't draw it...
+                indexOfConnectionToDelete = j;
+            } else {
+                // ...otherwise, draw the current connection.
+                ctx.beginPath();
+                ctx.moveTo(points[i].x, points[i].y);
+                ctx.lineTo(points[i].connections[j].x, points[i].connections[j].y);
+                ctx.strokeStyle = "red";
+                ctx.stroke();
+                ctx.closePath();
+            }
+        }
+
+        // Actually remove the connection to the deleted point.
+        if (indexOfConnectionToDelete != -1) {
+            points[i].connections.splice(indexOfConnectionToDelete, 1);
+        }
     }
+}
+
+/**
+ * Clears the entire canvas, regardless of transform.
+ * @param {CanvasRenderingContext2D} ctx: The ctx of the canvas to clear.
+ */
+export function clearCanvas(ctx) {
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.restore();
 }

@@ -4,7 +4,7 @@
  */
 
  import {PNG} from "./PNG.js";
- import {Point, redrawPoints} from "./draw.js";
+ import {Point, Connection, redraw} from "./draw.js";
  import {canvasPointToGridPoint} from "./coordinateHelper.js";
 
 // Start executing after the page loads.
@@ -53,7 +53,7 @@ function initializeCanvasWithImage(canvas, src) {
     let ctx = canvas.getContext("2d");
 
     // The image that's drawn onto the canvas.
-    let png = new PNG(src);
+    let png = new PNG(src, ctx);
 
     // The cursor's location on the canvas.
     let cursorLocation = {
@@ -86,31 +86,30 @@ function initializeCanvasWithImage(canvas, src) {
     // Store all points drawn onto the canvas.
     let points = [];
 
+    // Stores the first point clicked.
+    let firstPointClicked = null;
+
+    // Store all connections drawn onto the canvas.
+    let connections = [];
+
     //====================================================================================================
     // Event Listeners
     //====================================================================================================
 
     // Resizes the canvas, maintaining 2:1 ratio, and redraws everything.
     window.onresize = () => {
-        // Grab the previous ctx transform (can't use ctx.save because resizing the canvas clears the cache).
+        // Grab the previous ctx transform (can't use ctx.save because resizing the canvas clears the cache)...
         let t = ctx.getTransform();
 
-        //...therefore, we have to...
-        // ...clear the canvas...
-        clearCanvas(ctx);
-
-        // ...change the width and height of the canvas...
+        // ...therefore, we have to change the width and height of the canvas...
         canvas.width = canvas.parentElement.clientWidth;
         canvas.height = canvas.width/2;
 
         // ...translate and scale the grid by the previous transform...
         ctx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
 
-        // ...redraw the image based on the new origin...
-        ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
-
-        // ...and lastly, redraw the points and lines.
-        redrawPoints(points);
+        // Redraw the canvas.
+        redraw(ctx, png, points);
     }
 
     // Load in the PNG image, and draw it when it loads.
@@ -142,6 +141,10 @@ function initializeCanvasWithImage(canvas, src) {
         Used for panning and storing the cursor's location.
     */
     canvas.onmousemove = (e) => {
+        // Store the cursor's location each time it moves.
+        cursorLocation.x = e.offsetX;
+        cursorLocation.y = e.offsetY;
+
         // If the cursor is over the trashcan, restyle it.
         if ((cursorLocation.x >= canvas.width - 50 && cursorLocation.x <= canvas.width - 10) && (cursorLocation.y >= 10 && cursorLocation.y <= 50)) {
             trashcan.style.background = "#B22222";
@@ -151,9 +154,17 @@ function initializeCanvasWithImage(canvas, src) {
             trashcan.style.color = "#4A5056";
         }
 
-        // Store the cursor's location each time it moves.
-        cursorLocation.x = e.offsetX;
-        cursorLocation.y = e.offsetY;
+        // If the mouse is clicked and the state is "panning," pan the canvas.
+        if (e.which == 1 && state == states.panning) {
+            /* 
+                Translate the origin of the grid by the result of dividing movement by scale.
+                Diving by the scale causes the panning speed to be slower the more that you zoom in.
+            */
+            ctx.translate(e.movementX / ctx.getTransform().a, e.movementY / ctx.getTransform().d);
+
+            // Redraw the canvas.
+            redraw(ctx, png, points);
+        }
 
         // If a point is being grabbed, don't pan; instead, move the point by the mouse movement.
         if (latched) {
@@ -166,32 +177,22 @@ function initializeCanvasWithImage(canvas, src) {
             */
             latchedPoint.point.updateLocation(latchedPoint.point.x + (e.movementX / ctx.getTransform().a), latchedPoint.point.y + (e.movementY / ctx.getTransform().d));
 
-            // Clear the canvas.
-            clearCanvas(ctx);
-
-            // Redraw the image.
-            ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
-
-            // Redraw all points.
-            redrawPoints(points);
+            // Redraw the canvas.
+            redraw(ctx, png, points);
         }
 
-        // If the mouse is clicked and the state is "panning," pan the canvas.
-        if (e.which == 1 && state == states.panning) {
-            // Clear the canvas.
-            clearCanvas(ctx);
+        // If a first point has been clicked while in "drawingLines" state, draw a line to the cursor.
+        if (firstPointClicked != null) {
+            // Redraw the canvas.
+            redraw(ctx, png, points);
 
-            /* 
-                Translate the origin of the grid by the result of dividing movement by scale.
-                Diving by the scale causes the panning speed to be slower the more that you zoom in.
-            */
-            ctx.translate(e.movementX / ctx.getTransform().a, e.movementY / ctx.getTransform().d);
-
-            // Redraw the image.
-            ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
-
-            // Redraw all points.
-            redrawPoints(points);
+            // Draw a line to the cursor.
+            let cursorGrid = canvasPointToGridPoint(ctx, cursorLocation.x, cursorLocation.y);
+            ctx.beginPath();
+            ctx.moveTo(firstPointClicked.x, firstPointClicked.y);
+            ctx.lineTo(cursorGrid.x, cursorGrid.y);
+            ctx.strokeStyle = "red";
+            ctx.stroke();
         }
     }
 
@@ -205,9 +206,6 @@ function initializeCanvasWithImage(canvas, src) {
 
         // Zoom in.
         if (e.deltaY > 0) {
-            // Clear the canvas.
-            clearCanvas(ctx);
-
             // Grab the mouse x and y value before scaling.
             let mouseBeforeScale = canvasPointToGridPoint(ctx, cursorLocation.x, cursorLocation.y);
 
@@ -220,14 +218,25 @@ function initializeCanvasWithImage(canvas, src) {
             // Translate by the displacement of the mouse's location.
             ctx.translate(mouseAfterScale.x - mouseBeforeScale.x, mouseAfterScale.y - mouseBeforeScale.y);
 
-            // Redraw the image.
-            ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
+            // Redraw the canvas.
+            redraw(ctx, png, points);
+
+            // If a first point has been clicked while in "drawingLines" state, draw a line to the cursor.
+            if (firstPointClicked != null) {
+                // Redraw the canvas.
+                redraw(ctx, png, points);
+
+                // Draw a line to the cursor.
+                let cursorGrid = canvasPointToGridPoint(ctx, cursorLocation.x, cursorLocation.y);
+                ctx.beginPath();
+                ctx.moveTo(firstPointClicked.x, firstPointClicked.y);
+                ctx.lineTo(cursorGrid.x, cursorGrid.y);
+                ctx.strokeStyle = "red";
+                ctx.stroke();
+            }
         }
         // Zoom out.
         else if (e.deltaY < 0) {
-            // Clear the canvas.
-            clearCanvas(ctx);
-
             // Grab the mouse x and y value before scaling.
             let mouseBeforeScale = canvasPointToGridPoint(ctx, cursorLocation.x, cursorLocation.y);
 
@@ -240,12 +249,23 @@ function initializeCanvasWithImage(canvas, src) {
             // Translate by the displacement of the mouse's location.
             ctx.translate(mouseAfterScale.x - mouseBeforeScale.x, mouseAfterScale.y - mouseBeforeScale.y);
 
-            // Redraw the image.
-            ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
-        }
+            // Redraw the canvas.
+            redraw(ctx, png, points);
 
-        // Redraw all points.
-        redrawPoints(points);
+            // If a first point has been clicked while in "drawingLines" state, draw a line to the cursor.
+            if (firstPointClicked != null) {
+                // Redraw the canvas.
+                redraw(ctx, png, points);
+
+                // Draw a line to the cursor.
+                let cursorGrid = canvasPointToGridPoint(ctx, cursorLocation.x, cursorLocation.y);
+                ctx.beginPath();
+                ctx.moveTo(firstPointClicked.x, firstPointClicked.y);
+                ctx.lineTo(cursorGrid.x, cursorGrid.y);
+                ctx.strokeStyle = "red";
+                ctx.stroke();
+            }
+        }
 
         // Use a timer to determine if zooming has stopped, and if so, set the curser to indicate zooming has stopped.
         if(scrollingTimer !== null) {
@@ -289,7 +309,59 @@ function initializeCanvasWithImage(canvas, src) {
             // ...otherwise, create a new point at that location, and draw it.
             let newPoint = new Point(ctx, cursorGridPoint.x, cursorGridPoint.y);
             points.push(newPoint);
-            newPoint.draw();
+            newPoint.draw(ctx);
+        }
+
+        // If the state is "drawingLines:"
+        if (state == states.drawingLines) {
+            // Determine if the clicked mouse point contains a point, if so, set if it's the first or second point clicked...
+            for (let i = 0; i < points.length; i++) {
+                if (cursorGridPoint.x <= points[i].x + 5 && cursorGridPoint.x >= points[i].x - 5) {
+                    if (cursorGridPoint.y <= points[i].y + 5 && cursorGridPoint.y >= points[i].y - 5) {
+                        // If a first point hasn't been clicked, set it as the first point clicked.
+                        if (firstPointClicked == null) {
+                            firstPointClicked = points[i];
+                        }
+                        // Otherwise, set the second point clicked, and draw the line.
+                        else {
+                            // Ensure not trying to connect to first point.
+                            if (points[i] === firstPointClicked) {
+                                return;
+                            }
+
+                            // Ensure a connection between these points doesn't already exist...
+                            for (let k = 0; k < connections.length; k++) {
+                                if (firstPointClicked === connections[k].a ||  firstPointClicked === connections[k].b) {
+                                    if (points[i] === connections[k].a ||  points[i] === connections[k].b) {
+                                        // ...if so, don't add a new connection; instead, just reset the first point clicked.
+                                        firstPointClicked = null;
+                                        return;
+                                    }
+                                }
+                            }
+
+                            // Store the connection.
+                            connections.push(new Connection(firstPointClicked, points[i]));
+
+                            // Update both points to visually show that they're connected.
+                            firstPointClicked.fill = true;
+                            points[i].fill = true;
+
+                            /*
+                                Add connection only to the first point for drawing.
+                                This eleminates drawing the connection twice.
+                            */
+                            firstPointClicked.addConnection(points[i]);
+
+                            // Redraw the canvas.
+                            redraw(ctx, png, points);
+
+                            // Reset the first point clicked.
+                            firstPointClicked = null;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -305,14 +377,16 @@ function initializeCanvasWithImage(canvas, src) {
                     // Remove the point from the points array.
                     points.splice(latchedPoint.index, 1);
 
-                    // Clear the canvas.
-                    clearCanvas(ctx);
+                    // Remove all connections from storage that include the deleted point.
+                    for (let i = 0; i < connections.length; i++) {
+                        if (connections[i].a === latchedPoint.point || connections[i].b === latchedPoint.point) {
+                            connections.splice(i, 1);
+                            i = 0;
+                        }
+                    }
 
-                    // Redraw the image.
-                    ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
-
-                    // Redraw all points.
-                    redrawPoints(points);
+                    // Redraw the canvas.
+                    redraw(ctx, png, points, latchedPoint.point, latchedPoint.index);
                 }
             }
         }
@@ -385,19 +459,15 @@ function initializeCanvasWithImage(canvas, src) {
             lineButton.style.color = "#4A5056"
         }
     }
-}
 
-//====================================================================================================
-// Helper Functions
-//====================================================================================================
-
-/**
- * Clears the entire canvas, regardless of transform.
- * @param {CanvasRenderingContext2D} ctx: The ctx of the canvas to clear.
- */
-export function clearCanvas(ctx) {
-    ctx.save();
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.restore();
+    /*
+        Setup delete key event listener.
+        Used for removing first clicked point when drawing lines.
+    */
+    window.onkeydown = (e) => {
+        if (e.keyCode == 8 || e.keyCode == 127) {
+            firstPointClicked = null;
+            redraw(ctx, png, points);
+        }
+    }
 }
