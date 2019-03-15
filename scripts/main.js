@@ -114,20 +114,17 @@ function initializeCanvasWithImage(canvas, src) {
 
     // Load in the PNG image, and draw it when it loads.
     png.onload = () => {
-        // Scale the image so that it displays as big as possible in the canvas.
-        if (Math.min(png.width, png.height) == png.width) {
-            if (png.width < canvas.width) {
-                png.scale(1 + (1 - Math.abs(png.width/canvas.width)));
-            } else {
-                png.scale(Math.abs(canvas.width/png.width));
-            }
-        } else {
-            if (png.height < canvas.height) {
-                png.scale(1 + (1 - Math.abs(png.height/canvas.height)));
-            } else {
-                png.scale(Math.abs(canvas.height/png.height));
-            }
+        // Scale the image so that its height fills the canvas.
+        if (canvas.height < png.height) {
+            console.log("1");
+            png.scale( 1 - ((png.height-canvas.height)/png.height) );
+        } else if (canvas.height > png.height) {
+            console.log("2");
+            png.scale( 1 + ((canvas.height - png.height)/png.height) );
         }
+
+        console.log(png.height);
+        console.log(canvas.height);
         
         // Position the image at the center of the canvas.
         ctx.translate(canvas.width/2 - png.width/2, canvas.height/2 - png.height/2);
