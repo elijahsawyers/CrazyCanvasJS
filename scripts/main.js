@@ -116,11 +116,11 @@ function initializeCanvasWithImage(canvas, src) {
     png.onload = () => {
         // Scale the image so that its height fills the canvas.
         if (canvas.height < png.height) {
-            console.log("1");
-            png.scale( 1 - ((png.height-canvas.height)/png.height) );
+            scale = 1 - ((png.height - canvas.height) / png.height);
+            png.scale(1 - ((png.height - canvas.height) / png.height));
         } else if (canvas.height > png.height) {
-            console.log("2");
-            png.scale( 1 + ((canvas.height - png.height)/png.height) );
+            scale = 1 + ((canvas.height - png.height) / png.height);
+            png.scale(1 + ((canvas.height - png.height) / png.height));
         }
 
         console.log(png.height);
