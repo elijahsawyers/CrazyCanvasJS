@@ -1,0 +1,24 @@
+{
+  "name": "crazycanvasjs",
+  "version": "1.0.0",
+  "description": "Draw images, points, and lines onto a canvas with the ability to pan around and zoom.",
+  "main": "./dist/main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/elijahsawyers/CrazyCanvasJS.git"
+  },
+  "author": "Elijah Sawyers",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/elijahsawyers/CrazyCanvasJS/issues"
+  },
+  "homepage": "https://github.com/elijahsawyers/CrazyCanvasJS#readme",
+  "devDependencies": {
+    "gulp": "^4.0.0",
+    "gulp-typescript": "^5.0.1",
+    "typescript": "^3.6.4"
+  }
+}
