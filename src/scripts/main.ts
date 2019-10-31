@@ -1,25 +1,19 @@
 /**
- * @file Manages the main functionality for the canvas
  * @author Elijah Sawyers <elijahsawyers@gmail.com>
  */
 
- import {PNG} from "./PNG.js";
- import {Point, Connection, redraw} from "./draw.js";
- import {canvasPointToGridPoint} from "./coordinateHelper.js";
+ import Canvas from './Canvas';
+ import CanvasImage from './Canvas/CanvasImage';
+ import CanvasPoint from './Canvas/CanvasPoint';
 
-// Start executing after the page loads.
-window.onload = main;
-
-/** The main function for our simple application. */ 
-function main() {
-    // Grab the canvas and set its height/width (maintaining the 2:1 ratio).
-    const canvas = document.getElementById("PDFCanvas");
-    canvas.width = canvas.parentElement.clientWidth;
+(function main() {
+    const canvas = <HTMLCanvasElement>document.getElementById('PDFCanvas');
+    canvas.width = (<HTMLDivElement>canvas.parentElement).clientWidth;
     canvas.height = canvas.width/2;
 
     // Initialize the canvas, its events, and enable drawing functionality.
-    initializeCanvasWithImage(canvas, "../static/images/chalkboard.png");
-}
+    initializeCanvasWithImage(canvas, '../static/images/chalkboard.png');
+})();
 
 /**
  * This function initializes the canvas by displaying an image, setting up panning and zooming, 
@@ -30,27 +24,27 @@ function main() {
 function initializeCanvasWithImage(canvas, src) {
 
     // Set initial cursor style.
-    canvas.style.cursor = "grab";
+    canvas.style.cursor = 'grab';
 
     //====================================================================================================
     // DOM Elements
     //====================================================================================================
 
-    // The point "button" in the toolbar.
-    let pointButton = document.getElementById("point"); 
+    // The point 'button' in the toolbar.
+    let pointButton = document.getElementById('point'); 
 
-    // The line "button" in the toolbar.
-    let lineButton = document.getElementById("line");
+    // The line 'button' in the toolbar.
+    let lineButton = document.getElementById('line');
 
     // The trashcan for removing nodes.
-    let trashcan = document.getElementById("trash");
+    let trashcan = document.getElementById('trash');
 
     //====================================================================================================
     // Local Variables
     //====================================================================================================
 
     // Grab the 2d context of the canvas.
-    let ctx = canvas.getContext("2d");
+    let ctx = canvas.getContext('2d');
 
     // The image that's drawn onto the canvas.
     let png = new PNG(src, ctx);
@@ -144,14 +138,14 @@ function initializeCanvasWithImage(canvas, src) {
 
         // If the cursor is over the trashcan, restyle it.
         if ((cursorLocation.x >= canvas.width - 50 && cursorLocation.x <= canvas.width - 10) && (cursorLocation.y >= 10 && cursorLocation.y <= 50)) {
-            trashcan.style.background = "#B22222";
-            trashcan.style.color = "#fff";
+            trashcan.style.background = '#B22222';
+            trashcan.style.color = '#fff';
         } else {
-            trashcan.style.background = "#fff";
-            trashcan.style.color = "#4A5056";
+            trashcan.style.background = '#fff';
+            trashcan.style.color = '#4A5056';
         }
 
-        // If the mouse is clicked and the state is "panning," pan the canvas.
+        // If the mouse is clicked and the state is 'panning,' pan the canvas.
         if (e.which == 1 && state == states.panning) {
             /* 
                 Translate the origin of the grid by the result of dividing movement by scale.
@@ -166,7 +160,7 @@ function initializeCanvasWithImage(canvas, src) {
         // If a point is being grabbed, don't pan; instead, move the point by the mouse movement.
         if (latched) {
             // Set the curser to indicate a point is grabbed.
-            canvas.style.cursor = "grabbing";
+            canvas.style.cursor = 'grabbing';
             
             /* 
                 Move the latched point by the result of dividing the mouse movement by scale.
@@ -178,7 +172,7 @@ function initializeCanvasWithImage(canvas, src) {
             redraw(ctx, png, points);
         }
 
-        // If a first point has been clicked while in "drawingLines" state, draw a line to the cursor.
+        // If a first point has been clicked while in 'drawingLines' state, draw a line to the cursor.
         if (firstPointClicked != null) {
             // Redraw the canvas.
             redraw(ctx, png, points);
@@ -188,7 +182,7 @@ function initializeCanvasWithImage(canvas, src) {
             ctx.beginPath();
             ctx.moveTo(firstPointClicked.x, firstPointClicked.y);
             ctx.lineTo(cursorGrid.x, cursorGrid.y);
-            ctx.strokeStyle = "red";
+            ctx.strokeStyle = 'red';
             ctx.stroke();
         }
     }
@@ -199,7 +193,7 @@ function initializeCanvasWithImage(canvas, src) {
     */
     canvas.onmousewheel = (e) => {
         // Set the curser to indicate zoom.
-        canvas.style.cursor = "ns-resize";
+        canvas.style.cursor = 'ns-resize';
 
         // Zoom in.
         if (e.deltaY > 0) {
@@ -218,7 +212,7 @@ function initializeCanvasWithImage(canvas, src) {
             // Redraw the canvas.
             redraw(ctx, png, points);
 
-            // If a first point has been clicked while in "drawingLines" state, draw a line to the cursor.
+            // If a first point has been clicked while in 'drawingLines' state, draw a line to the cursor.
             if (firstPointClicked != null) {
                 // Redraw the canvas.
                 redraw(ctx, png, points);
@@ -228,7 +222,7 @@ function initializeCanvasWithImage(canvas, src) {
                 ctx.beginPath();
                 ctx.moveTo(firstPointClicked.x, firstPointClicked.y);
                 ctx.lineTo(cursorGrid.x, cursorGrid.y);
-                ctx.strokeStyle = "red";
+                ctx.strokeStyle = 'red';
                 ctx.stroke();
             }
         }
@@ -249,7 +243,7 @@ function initializeCanvasWithImage(canvas, src) {
             // Redraw the canvas.
             redraw(ctx, png, points);
 
-            // If a first point has been clicked while in "drawingLines" state, draw a line to the cursor.
+            // If a first point has been clicked while in 'drawingLines' state, draw a line to the cursor.
             if (firstPointClicked != null) {
                 // Redraw the canvas.
                 redraw(ctx, png, points);
@@ -259,7 +253,7 @@ function initializeCanvasWithImage(canvas, src) {
                 ctx.beginPath();
                 ctx.moveTo(firstPointClicked.x, firstPointClicked.y);
                 ctx.lineTo(cursorGrid.x, cursorGrid.y);
-                ctx.strokeStyle = "red";
+                ctx.strokeStyle = 'red';
                 ctx.stroke();
             }
         }
@@ -270,9 +264,9 @@ function initializeCanvasWithImage(canvas, src) {
         }
         scrollingTimer = setTimeout(function() {
             if (state == states.panning) {
-                canvas.style.cursor = "grab";
+                canvas.style.cursor = 'grab';
             } else {
-                canvas.style.cursor = "pointer";
+                canvas.style.cursor = 'pointer';
             }
         }, 100);
     }
@@ -285,12 +279,12 @@ function initializeCanvasWithImage(canvas, src) {
         // Calculate the mouse pointer's location in the grid's coordinate system.
         let cursorGridPoint = canvasPointToGridPoint(ctx, cursorLocation.x, cursorLocation.y);
 
-        // If the state is "panning," set the curser to indicate panning.
+        // If the state is 'panning,' set the curser to indicate panning.
         if (state == states.panning) {
-            canvas.style.cursor = "grabbing";
+            canvas.style.cursor = 'grabbing';
         } 
 
-        // If the state is "drawingPoints:"
+        // If the state is 'drawingPoints:'
         if (state == states.drawingPoints) {
             // Determine if the clicked mouse point contains a point, if so, latch onto the point...
             for (let i = 0; i < points.length; i++) {
@@ -309,7 +303,7 @@ function initializeCanvasWithImage(canvas, src) {
             newPoint.draw(ctx);
         }
 
-        // If the state is "drawingLines:"
+        // If the state is 'drawingLines:'
         if (state == states.drawingLines) {
             // Determine if the clicked mouse point contains a point, if so, set if it's the first or second point clicked...
             for (let i = 0; i < points.length; i++) {
@@ -388,16 +382,16 @@ function initializeCanvasWithImage(canvas, src) {
             }
         }
 
-        // If the state is "panning," reset the cursor so that it's no longer grabbing.
+        // If the state is 'panning,' reset the cursor so that it's no longer grabbing.
         if (state == states.panning) {
-            canvas.style.cursor = "grab";
+            canvas.style.cursor = 'grab';
         }
         /* 
-            If the state is "drawingPoints," reset the cursor so that it's no longer grabbing, 
+            If the state is 'drawingPoints,' reset the cursor so that it's no longer grabbing, 
             reset latched point, and indicate that you're no longer latched. 
         */
         else if (state == states.drawingPoints) {
-            canvas.style.cursor = "pointer";
+            canvas.style.cursor = 'pointer';
             latched = false;
             latchedPoint.point = null;
             latchedPoint.index = null;
@@ -411,10 +405,10 @@ function initializeCanvasWithImage(canvas, src) {
     canvas.onmouseleave = (e) => {
         if (state == states.drawingPoints) {
             latched = false;
-            canvas.style.cursor = "pointer";
+            canvas.style.cursor = 'pointer';
         }
-        trashcan.style.background = "#fff";
-        trashcan.style.color = "#4A5056";
+        trashcan.style.background = '#fff';
+        trashcan.style.color = '#4A5056';
     }
 
     /*
@@ -424,16 +418,16 @@ function initializeCanvasWithImage(canvas, src) {
     pointButton.onclick = (e) => {
         if (state != states.drawingPoints) {
             state = states.drawingPoints;
-            canvas.style.cursor = "pointer";
-            pointButton.style.background = "#71815f"
-            pointButton.style.color = "#fff"
-            lineButton.style.background = "#fff"
-            lineButton.style.color = "#4A5056"
+            canvas.style.cursor = 'pointer';
+            pointButton.style.background = '#71815f'
+            pointButton.style.color = '#fff'
+            lineButton.style.background = '#fff'
+            lineButton.style.color = '#4A5056'
         } else {
             state = states.panning;
-            canvas.style.cursor = "grab";
-            pointButton.style.background = "#fff"
-            pointButton.style.color = "#4A5056"
+            canvas.style.cursor = 'grab';
+            pointButton.style.background = '#fff'
+            pointButton.style.color = '#4A5056'
         }
     }
 
@@ -444,16 +438,16 @@ function initializeCanvasWithImage(canvas, src) {
     lineButton.onclick = (e) => {
         if (state != states.drawingLines) {
             state = states.drawingLines;
-            canvas.style.cursor = "pointer";
-            lineButton.style.background = "#71815f"
-            lineButton.style.color = "#fff"
-            pointButton.style.background = "#fff"
-            pointButton.style.color = "#4A5056"
+            canvas.style.cursor = 'pointer';
+            lineButton.style.background = '#71815f'
+            lineButton.style.color = '#fff'
+            pointButton.style.background = '#fff'
+            pointButton.style.color = '#4A5056'
         } else {
             state = states.panning;
-            canvas.style.cursor = "grab";
-            lineButton.style.background = "#fff"
-            lineButton.style.color = "#4A5056"
+            canvas.style.cursor = 'grab';
+            lineButton.style.background = '#fff'
+            lineButton.style.color = '#4A5056'
         }
     }
 
