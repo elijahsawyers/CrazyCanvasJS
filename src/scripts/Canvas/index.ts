@@ -4,13 +4,19 @@
 
 import CanvasImage from './CanvasImage';
 import CanvasPoint from './CanvasPoint';
+import CanvasState from './CanvasState'
 import Coordinate from './Coordinate';
 
 /** Represents a canvas with an image to draw onto. */
-export class Canvas {
+export default class Canvas {
 
     ctx: CanvasRenderingContext2D;
     points: Array<CanvasPoint> = [];
+    cursorCoordinate: Coordinate = {x: 0, y: 0};
+    latched: boolean = false;
+    latchedPoint: CanvasPoint | null = null;
+    zooming: boolean = false;
+    state: CanvasState = CanvasState.panning;
 
     /** 
      * Creates a canvas with an image to draw points and connections between points.
