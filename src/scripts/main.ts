@@ -27,45 +27,29 @@
     /** Manages a HTMLCanvasElement, used for drawing an image, points, and connections. */
     const canvas = new Canvas(canvasHTMLElement, image);
 
+    /*
+     * Resizes the canvas when the window is resized.
+     *
+     * Grab the current transform of the canvas' ctx, change the canvas' width and height,
+     * set the transform to the grabbed transfrom, and redraw the canvas.
+     */
+    window.onresize = () => {
+        const transform = canvas.ctx.getTransform();
+
+        canvasHTMLElement.width = (<HTMLDivElement>canvasHTMLElement.parentElement).clientWidth;
+        canvasHTMLElement.height = canvasHTMLElement.width/2;
+
+        canvas.ctx.setTransform(
+            transform.a,
+            transform.b,
+            transform.c,
+            transform.d,
+            transform.e,
+            transform.f,
+        );
+        canvas.redraw();
+    };
 })();
-
-
-// // Resizes the canvas, maintaining 2:1 ratio, and redraws everything.
-// window.onresize = () => {
-//     // Grab the previous ctx transform (can't use ctx.save because resizing the canvas clears the cache)...
-//     let t = ctx.getTransform();
-
-//     // ...therefore, we have to change the width and height of the canvas...
-//     canvas.width = canvas.parentElement.clientWidth;
-//     canvas.height = canvas.width/2;
-
-//     // ...translate and scale the grid by the previous transform...
-//     ctx.setTransform(t.a, t.b, t.c, t.d, t.e, t.f);
-
-//     // Redraw the canvas.
-//     redraw(ctx, png, points);
-// }
-
-// // Load in the PNG image, and draw it when it loads.
-// png.onload = () => {
-//     // Scale the image so that its height fills the canvas.
-//     if (canvas.height < png.height) {
-//         scale = 1 - ((png.height - canvas.height) / png.height);
-//         png.scale(1 - ((png.height - canvas.height) / png.height));
-//     } else if (canvas.height > png.height) {
-//         scale = 1 + ((canvas.height - png.height) / png.height);
-//         png.scale(1 + ((canvas.height - png.height) / png.height));
-//     }
-
-//     console.log(png.height);
-//     console.log(canvas.height);
-    
-//     // Position the image at the center of the canvas.
-//     ctx.translate(canvas.width/2 - png.width/2, canvas.height/2 - png.height/2);
-
-//     // Draw the image on the canvas.
-//     ctx.drawImage(png, png.canvasX, png.canvasY, png.width, png.height);
-// }
 
 // /* 
 //     Setup mousemove event listenter.

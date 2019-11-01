@@ -23,7 +23,7 @@ gulp.task('copy-assets', done => {
 gulp.task('copy-ts', () => {
   return tsProject.src()
       .pipe(tsProject())
-      .js.pipe(gulp.dest('dist/scripts'));
+      .js.pipe(gulp.dest('dist'));
 });
 
 gulp.task('default', gulp.parallel(['copy-html', 'copy-styles', 'copy-assets', 'copy-ts']));

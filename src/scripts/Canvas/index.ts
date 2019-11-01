@@ -17,6 +17,7 @@ export default class Canvas {
     latchedPoint: CanvasPoint | null = null;
     zooming: boolean = false;
     state: CanvasState = CanvasState.panning;
+    scale: number = 1;
 
     /** 
      * Creates a canvas with an image to draw points and connections between points.
@@ -26,7 +27,28 @@ export default class Canvas {
      */
     constructor(public canvas: HTMLCanvasElement, public image: CanvasImage) {
         this.ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
-        this.redraw();
+        this.image.onload = () => {
+            // Scale the image so that its height fills the canvas.
+            if (canvas.height < this.image.height) {
+                const numerator = this.image.height - canvas.height;
+                const denominator = this.image.height;
+                this.scale = 1 - (numerator / denominator);
+                this.image.scale(this.scale);
+            } else if (canvas.height > this.image.height) {
+                const numerator = canvas.height - this.image.height;
+                const denominator = this.image.height;
+                this.scale = 1 + (numerator / denominator);
+                this.image.scale(this.scale);
+            }
+
+            // Position the image at the center of the canvas.
+            this.ctx.translate(
+                canvas.width / 2 - this.image.width / 2,
+                canvas.height / 2 - this.image.height / 2
+            );
+
+            this.redraw();
+        };
     }
 
     /**
