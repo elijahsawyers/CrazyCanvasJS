@@ -1,29 +1,56 @@
-var gulp = require('gulp');
-var ts = require('gulp-typescript');
-var tsProject = ts.createProject('tsconfig.json');
+/**
+ * @author Elijah Sawyers <elijahsawyers@gmail.com>
+ */
+'use strict';
 
-gulp.task('copy-html', done => {
-  gulp.src("src/index.html")
-    .pipe(gulp.dest('dist'));
-  done();
-});
+const {dest, parallel, src, watch} = require('gulp');
+const connect = require('gulp-connect');
+const browserify = require('browserify');
+const watchify = require('watchify');
+const source = require('vinyl-source-stream');
+const tsify = require('tsify');
 
-gulp.task('copy-styles', done => {
-  gulp.src("src/styles/*")
-    .pipe(gulp.dest('dist/styles'));
-  done();
-});
+const watchedBrowserify = watchify(browserify()
+    .add('src/scripts/main.ts')
+    .plugin(tsify));
 
-gulp.task('copy-assets', done => {
-  gulp.src("src/assets/images/*")
-    .pipe(gulp.dest('dist/assets/images'));
-  done();
-});
+const build = parallel(copyHtml, copyStyles, copyAssets, bundle);
 
-gulp.task('copy-ts', () => {
-  return tsProject.src()
-      .pipe(tsProject())
-      .js.pipe(gulp.dest('dist'));
-});
+function startServer() {
+    connect.server({
+        root: './dist',
+        livereload: true
+    })
+};
 
-gulp.task('default', gulp.parallel(['copy-html', 'copy-styles', 'copy-assets', 'copy-ts']));
+function copyHtml() {
+    return src('src/**/*.html')
+        .pipe(dest('dist'));
+};
+
+function copyStyles() {
+    return src('src/styles/**/*.css')
+        .pipe(dest('dist/styles'));
+};
+
+function copyAssets() {
+    return src('src/assets/**')
+        .pipe(dest('dist/assets'));
+};
+
+function bundle() {
+    return watchedBrowserify
+        .bundle()
+        .pipe(source('bundle.js'))
+        .pipe(dest('dist'));
+};
+
+exports.build = build;
+exports.connect = startServer;
+exports.default = () => {
+    watch('src/**/*.html', {ignoreInitial: false}, copyHtml);
+    watch('src/styles/**/*.css', {ignoreInitial: false}, copyStyles);
+    watch('src/assets/**', {ignoreInitial: false}, copyAssets);
+    watch('src/scripts/**/*.ts', {ignoreInitial: false}, bundle);
+    startServer();
+};
