@@ -48,9 +48,9 @@ function bundle() {
 exports.build = build;
 exports.connect = startServer;
 exports.default = () => {
-    watch('src/**/*.html', {ignoreInitial: false}, copyHtml);
-    watch('src/styles/**/*.css', {ignoreInitial: false}, copyStyles);
-    watch('src/assets/**', {ignoreInitial: false}, copyAssets);
-    watch('src/scripts/**/*.ts', {ignoreInitial: false}, bundle);
+    watch('src/**/*.html', { ignoreInitial: false }, copyHtml);
+    watch('src/styles/**/*.css', { ignoreInitial: false }, copyStyles);
+    watch('src/assets/**', { ignoreInitial: false }, copyAssets);
+    watch('src/scripts/**/*.ts', { ignoreInitial: false }, bundle);
     startServer();
 };
