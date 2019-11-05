@@ -4,28 +4,32 @@
 
 import Coordinate from './Coordinate';
 
-/** 
- * Represents an image to be displayed in a DrawingCanvas.
- *
- * @extends Image
- */
-export default class CanvasImage extends Image {
+/** Represents an image to be displayed in a DrawingCanvas. */
+export default class CanvasImage {
 
+    image: HTMLImageElement;
     coordinate: Coordinate;
 
-    /** 
+    /**
      * Creates an image positioned at the specified canvas' ctx's x and y location.
      *
-     * @param {string} src: The path to the image.
+     * @param {string | HTMLImageElement} image: A path to an image, or an HTMLImageElement.
      * @param {number} x: The canvas' ctx's x-value to place the image.
      * @param {number} y: The canvas' ctx's y-value to place the image.
      */
-    constructor(public src: string, public x: number = 0, public y: number = 0) {
-        super();
-        this.coordinate = {
-            x,
-            y
+    constructor(
+        image: string | HTMLImageElement,
+        x: number = 0,
+        y: number = 0
+    ) {
+        if (typeof(image) === 'string') {
+            this.image = new Image();
+            this.image.src = image;
+        } else {
+            this.image = image;
         }
+
+        this.coordinate = { x, y };
     }
 
     /**
@@ -34,8 +38,8 @@ export default class CanvasImage extends Image {
      * @param {number} factor: The factor to scale the image by.
      */
     scale(factor: number): void {
-        this.width *= factor;
-        this.height *= factor;
+        this.image.width *= factor;
+        this.image.height *= factor;
     }
 
     /**

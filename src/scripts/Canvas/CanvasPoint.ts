@@ -43,4 +43,8 @@ export default class CanvasPoint {
     addConnection(point: CanvasPoint): void {
         this.connections.push(point);
     }
+
+    deleteConnection(pointToDelete: CanvasPoint) {
+        this.connections = this.connections.filter((point) => point != pointToDelete);
+    }
 }

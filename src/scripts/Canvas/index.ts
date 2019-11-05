@@ -10,14 +10,26 @@ import Coordinate from './Coordinate';
 /** Represents a canvas with an image to draw onto. */
 export default class Canvas {
 
+    /** The rendering context for the canvas. */
     ctx: CanvasRenderingContext2D;
+
+    /** All points currently on the canvas. */
     points: Array<CanvasPoint> = [];
+
+    /** The mouse pointer's coordinates on the canvas. */
     cursorCoordinate: Coordinate = {x: 0, y: 0};
+
+    /** Whether or not a point is being grabbed. */
     latched: boolean = false;
+
+    /** If a point is being grabbed, it's the grabbed point; otherwise, null. */
     latchedPoint: CanvasPoint | null = null;
-    zooming: boolean = false;
+
+    /** If the state is in drawingConnections, it's the first point clicked. */
+    firstPointClicked: CanvasPoint | null = null;
+
+    /** The state of the canvas: panning, drawingPoints, or drawingConnections. */
     state: CanvasState = CanvasState.panning;
-    scale: number = 1;
 
     /** 
      * Creates a canvas with an image to draw points and connections between points.
@@ -27,26 +39,26 @@ export default class Canvas {
      */
     constructor(public canvas: HTMLCanvasElement, public image: CanvasImage) {
         this.ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
-        this.image.onload = () => {
+        this.image.image.onload = () => {
             // Scale the image so that its height fills the canvas.
-            if (canvas.height < this.image.height) {
-                const numerator = this.image.height - canvas.height;
-                const denominator = this.image.height;
-                this.scale = 1 - (numerator / denominator);
-                this.image.scale(this.scale);
-            } else if (canvas.height > this.image.height) {
-                const numerator = canvas.height - this.image.height;
-                const denominator = this.image.height;
-                this.scale = 1 + (numerator / denominator);
-                this.image.scale(this.scale);
+            if (canvas.height < this.image.image.height) {
+                const numerator = this.image.image.height - canvas.height;
+                const denominator = this.image.image.height;
+                const scale = 1 - (numerator / denominator);
+                this.image.scale(scale);
+            } else if (canvas.height > this.image.image.height) {
+                const numerator = canvas.height - this.image.image.height;
+                const denominator = this.image.image.height;
+                const scale = 1 + (numerator / denominator);
+                this.image.scale(scale);
             }
 
             // Position the image at the center of the canvas.
             this.ctx.translate(
-                canvas.width / 2 - this.image.width / 2,
-                canvas.height / 2 - this.image.height / 2
+                canvas.width / 2 - this.image.image.width / 2,
+                canvas.height / 2 - this.image.image.height / 2
             );
-
+                
             this.redraw();
         };
     }
@@ -92,6 +104,7 @@ export default class Canvas {
      * @param {CanvasPoint} point:
      */
     drawPoint(point: CanvasPoint): void {
+        this.ctx.beginPath();
         this.ctx.fillStyle = point._fillStyle;
         this.ctx.arc(
             point.coordinate.x,
@@ -101,6 +114,7 @@ export default class Canvas {
             2 * Math.PI, // Radians.
         );
         this.ctx.fill();
+        this.ctx.closePath();
     }
 
     /**
@@ -110,20 +124,78 @@ export default class Canvas {
      * @param {CanvasPoint} pointB:
      */
     drawConnection(pointA: CanvasPoint, pointB: CanvasPoint): void {
+        this.ctx.beginPath();
         this.ctx.strokeStyle = pointA._fillStyle;
         this.ctx.moveTo(pointA.coordinate.x, pointA.coordinate.y);
         this.ctx.lineTo(pointB.coordinate.x, pointB.coordinate.y);
         this.ctx.stroke();
+        this.ctx.closePath();
     }
 
     /** Draws the image onto the canvas. */
     drawImage(): void {
         this.ctx.drawImage(
-            this.image,
+            this.image.image,
             this.image.coordinate.x,
             this.image.coordinate.y,
-            this.image.width,
-            this.image.height
+            this.image.image.width,
+            this.image.image.height
         );
+    }
+
+    pan(mouseMovementX: number, mouseMovementY: number): void {
+        this.ctx.translate(
+            mouseMovementX / this.ctx.getTransform().a,
+            mouseMovementY / this.ctx.getTransform().d
+        );
+        this.redraw();
+    }
+
+    zoom(mouseScrollDelta: number): void {
+        const scale = (mouseScrollDelta > 0) ? 1.05 : 0.95;
+
+        const mouseBeforeScale = this.canvasPointToCtxPoint(
+            this.cursorCoordinate.x,
+            this.cursorCoordinate.y
+        );
+
+        this.ctx.scale(scale, scale);
+
+        const mouseAfterScale = this.canvasPointToCtxPoint(
+            this.cursorCoordinate.x,
+            this.cursorCoordinate.y
+        );
+
+        this.ctx.translate(
+            mouseAfterScale.x - mouseBeforeScale.x,
+            mouseAfterScale.y - mouseBeforeScale.y
+        );
+
+        this.redraw();
+    }
+
+    clickOnPoint(mouseClickX: number, mouseClickY: number): CanvasPoint | null {
+        let cursorCtxPoint = this.canvasPointToCtxPoint(mouseClickX, mouseClickY);
+
+        for (let i = 0; i < this.points.length; i++) {
+            if (cursorCtxPoint.x <= this.points[i].coordinate.x + 5 && cursorCtxPoint.x >= this.points[i].coordinate.x - 5) {
+                if (cursorCtxPoint.y <= this.points[i].coordinate.y + 5 && cursorCtxPoint.y >= this.points[i].coordinate.y - 5) {
+                    return this.points[i];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    addPoint(point: CanvasPoint): void {
+        this.points.push(point);
+    }
+
+    deletePoint(pointToDelete: CanvasPoint): void {
+        this.points = this.points.filter((point) => point != pointToDelete);
+        this.points.forEach((point) => {
+            point.deleteConnection(pointToDelete);
+        });
     }
 }
