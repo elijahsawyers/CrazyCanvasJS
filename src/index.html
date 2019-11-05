@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Meta data -->
+    <meta charset="utf-8">
+    <title>CrazyCanvasJS</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+        integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+        integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"
+        integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy"
+        crossorigin="anonymous"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Righteous" rel="stylesheet">
+
+    <!-- Local styles and scripts -->
+    <link rel="stylesheet" href="styles/styles.css">
+    <script type="module" src="bundle.js"></script>
+</head>
+
+<body>
+    <!-- Container -->
+    <div class="container-fluid">
+        <!-- Row -->
+        <div class="row">
+            <h1 id="header">CrazyCanvasJS</h1>
+        </div>
+        <!-- /Row -->
+
+        <!-- Row -->
+        <div class="row">
+            <div class="col-xl-2"></div>
+            <div class="col-xl-8">
+
+                <!-- Toolbox -->
+                <div id="toolbox">
+                    <div class="button">
+                        <p id="point"><i class="far fa-square"></i> Point</p>
+                    </div>
+                    <div class="button">
+                        <p id="connection"><i class="fas fa-vector-square"></i> Connection</p>
+                    </div>
+                </div>
+                <!-- /Toolbox -->
+
+                <!-- Trash - Cannot be inside of the toolbox because pointer events need to be disabled. -->
+                <div id="trash"><i class="fas fa-trash-alt"></i></div>
+                <!-- /Trash -->
+
+                <!-- Canvas -->
+                <canvas id="PDFCanvas"></canvas>
+                <!-- /Canvas -->
+            </div>
+            <div class="col-xl-2"></div>
+        </div>
+        <!-- /Row -->
+
+    </div>
+    <!-- /Container -->
+</body>
+
+</html>
