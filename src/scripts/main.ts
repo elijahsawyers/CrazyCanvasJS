@@ -95,7 +95,7 @@ import CanvasState from './Canvas/CanvasState';
                         canvas.cursorCoordinate.y
                     );
                     const newPoint = new CanvasPoint(cursorCtxCoordinate.x, cursorCtxCoordinate.y);
-                    canvas.points.push(newPoint);
+                    canvas.addPoint(newPoint);
                     canvas.redraw();
                 }
 
