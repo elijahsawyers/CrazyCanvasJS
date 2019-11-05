@@ -1,6 +1,8 @@
 # CrazyCanvasJS
 
-> CrazyCanvasJS is a simple web application that allows users to draw onto a canvas using points and connections.
+> An art palette using the HTML5 Canvas element.
+
+CrazyCanvasJS is a simple web application that allows users to draw anything, using points and connections, on the HTML5 Canvas element! 
 
 ## Table of Contents
 
