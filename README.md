@@ -51,7 +51,7 @@ Checkout the demo below!
 
 <p align="center">
     <img src="https://raw.githubusercontent.com/elijahsawyers/CrazyCanvasJS/master/Demo.gif"
-        alt="Demo"/>
+        alt="Demo" width="100%"/>
 </p>
 
 ## License
