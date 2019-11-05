@@ -9,7 +9,7 @@ import CanvasState from './Canvas/CanvasState';
 
 (function main() {
     /** HTMLCanvasElement used for drawing. */
-    const canvasHTMLElement = <HTMLCanvasElement>document.getElementById('PDFCanvas');
+    const canvasHTMLElement = <HTMLCanvasElement>document.getElementById('canvas');
     canvasHTMLElement.width = (<HTMLDivElement>canvasHTMLElement.parentElement).clientWidth;
     canvasHTMLElement.height = canvasHTMLElement.width/2;
 
@@ -28,6 +28,10 @@ import CanvasState from './Canvas/CanvasState';
     /** Manages a HTMLCanvasElement, used for drawing an image, points, and connections. */
     const canvas = new Canvas(canvasHTMLElement, image);
 
+    /*
+     * When the window is resized, resize the canvas without losing the content drawn
+     * onto the canvas.
+     */
     window.onresize = () => {
         const transform = canvas.ctx.getTransform();
 
@@ -45,6 +49,11 @@ import CanvasState from './Canvas/CanvasState';
         canvas.redraw();
     };
 
+    /*
+     * When the delete key is pressed, nullify the first point clicked and redraw
+     * the canvas. While drawing connections, this removes the line being drawn
+     * from the first point clicked and the cursor.
+     */
     window.onkeydown = (e: KeyboardEvent) => {
         if (e.keyCode == 8 || e.keyCode == 127) {
             canvas.firstPointClicked = null;
@@ -52,8 +61,23 @@ import CanvasState from './Canvas/CanvasState';
         }
     }
 
+    /*
+     * When the mouse is moved on the canvas:
+     * 
+     * 1. Set the canvas' cursor coordinates.
+     * 2. If hovering the trash button, style it.
+     * 3. If clicking and in state 'panning', pan the canvas.
+     * 4. If in state 'drawingConnections' and a first point has already
+     *    been clicked, draw a line from the point to the cursor.
+     */
     canvasHTMLElement.onmousemove = (e: MouseEvent) => {
         canvas.cursorCoordinate = { x: e.offsetX, y: e.offsetY };
+
+        if (hoveringTrashButton(canvas.cursorCoordinate.x, canvas.cursorCoordinate.y)) {
+            trashButton.classList.add('trash-hover');
+        } else {
+            trashButton.classList.remove('trash-hover');
+        }
 
         if (canvas.latched) {
             (<CanvasPoint>canvas.latchedPoint).changeCoordinate(
@@ -81,6 +105,13 @@ import CanvasState from './Canvas/CanvasState';
         }
     };
 
+    /*
+     * When the mouse is clicked on the canvas:
+     * 
+     * 1. If in state 'drawingPoints' and not clicking on a point, add
+     *    a new point.
+     * 2. If in state 'drawingConnections', handle creating connections.
+     */
     canvasHTMLElement.onmousedown = (e: MouseEvent) => {
         const clickedPoint = canvas.clickOnPoint(canvas.cursorCoordinate.x, canvas.cursorCoordinate.y);
 
@@ -118,13 +149,16 @@ import CanvasState from './Canvas/CanvasState';
         }
     };
 
+    /*
+     * When the mouse click is released on the canvas:
+     * 
+     * 1. If in state 'drawingPoints' and hovering over the trash button with a point,
+     *    delete the point.
+     */
     canvasHTMLElement.onmouseup = (e: MouseEvent) => {
         switch (canvas.state) {
             case CanvasState.drawingPoints:
-                if (
-                    canvas.cursorCoordinate.x >= canvasHTMLElement.width - 50 &&
-                    canvas.cursorCoordinate.x <= canvasHTMLElement.width - 10
-                ) {
+                if (hoveringTrashButton(canvas.cursorCoordinate.x, canvas.cursorCoordinate.y)) {
                     if (canvas.latchedPoint) {
                         canvas.deletePoint(canvas.latchedPoint);
                         canvas.redraw();
@@ -140,29 +174,57 @@ import CanvasState from './Canvas/CanvasState';
         }
     };
 
+    /* Zoom the canvas on scroll. */
     canvasHTMLElement.onwheel = (e: WheelEvent) => {
         canvas.zoom(e.deltaY);
     };
 
+    /* On point button click, change the canvas state to 'drawingPoints'. */
     pointButton.onclick = (e: MouseEvent) => {
-        if (pointButton.classList.value.includes('selected')) {
-            canvas.state = CanvasState.panning;
-            pointButton.classList.remove('selected');
-        } else {
-            canvas.state = CanvasState.drawingPoints;
-            pointButton.classList.add('selected');
-        }
-        connectionsButton.classList.remove('selected');
+        toolboxSwitch(pointButton, connectionsButton, CanvasState.drawingPoints);
     };
 
+    /* On connections button click, change the canvas state to 'drawingConnections'. */
     connectionsButton.onclick = (e: MouseEvent) => {
-        if (connectionsButton.classList.value.includes('selected')) {
-            canvas.state = CanvasState.panning;
-            connectionsButton.classList.remove('selected');
-        } else {
-            canvas.state = CanvasState.drawingConnections;
-            connectionsButton.classList.add('selected');
-        }
-        pointButton.classList.remove('selected');
+        toolboxSwitch(connectionsButton, pointButton, CanvasState.drawingConnections);
     };
+
+    /**
+     * Given an (x, y) coordinate, return a boolean as to whether or not the coordinate
+     * is hovering over the trash button.
+     *
+     * @param x the x-value to check if it's hovering over the trash button.
+     * @param y the y-value to check if it's hovering over the trash button.
+     */
+    function hoveringTrashButton(x: number, y: number): boolean {
+        const trashXValue = canvasHTMLElement.clientWidth - trashButton.clientWidth - 10;
+        const trashYValue = 10;
+
+        if (x >= trashXValue && x <= trashXValue + trashButton.clientWidth) {
+            if (y >= trashYValue && y <= trashYValue + trashButton.clientHeight) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * When one of the two toolbox buttons is pressed, change the styling of the buttons and
+     * change the canvas' state.
+     *
+     * @param button: The button to change the style to '.selected'.
+     * @param oppositeButton: The button to remove the style '.selected'.
+     * @param activeState: The state to change the canvas to.
+     */
+    function toolboxSwitch(button: HTMLDivElement, oppositeButton: HTMLDivElement, activeState: CanvasState): void {
+        if (button.classList.value.includes('selected')) {
+            canvas.state = CanvasState.panning;
+            button.classList.remove('selected');
+        } else {
+            canvas.state = activeState;
+            button.classList.add('selected');
+        }
+        oppositeButton.classList.remove('selected');
+    }
 })();

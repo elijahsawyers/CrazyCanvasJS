@@ -1,15 +1,49 @@
+/*
+  Author: Elijah Sawyers
+  Email: elijahsawyers@gmail.com
+  Colors: 
+    1. Whites: #FFF
+    2. Greys: #4A5056, #CFD4D9, #AAA, #EEE
+    3. Greens: #71815F
+    4. Reds: #FF0000
+
+  Table of Contents:
+  ====================================================================================================
+    1. General Styles.
+    2. Header.
+    3. Toolbox.
+    4. Canvas.
+*/
+
+/*====================================================================================================
+1. General Styles.
+====================================================================================================*/
+
 body {
-    background-color:#eee;
+    background-color:#EEE;
+    overflow: hidden;
 }
 
+::-webkit-scrollbar { 
+  display: none; 
+}
+
+/*====================================================================================================
+2. Header.
+====================================================================================================*/
+
 #header {
-    color: 	#71815f;
+    color: 	#71815F;
     text-align: center;
     margin: 0 auto;
     padding: 25px;
     font-family: 'Righteous', cursive;
     font-size: 40pt;
 }
+
+/*====================================================================================================
+3. Toolbox.
+====================================================================================================*/
 
 #toolbox {
     position: absolute;
@@ -18,7 +52,7 @@ body {
     z-index: 2;
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.07);
     margin: 25px;
-    background: #fff;
+    background: #FFF;
     border-radius: 5px;
     color: #4A5056;
 }
@@ -30,8 +64,8 @@ body {
 }
 
 #toolbox p:hover {
-    background: #71815f;
-    color: #fff;
+    background: #71815F;
+    color: #FFF;
 }
 
 .button p {
@@ -54,10 +88,9 @@ body {
     right: 10px;
     font-size: 30px;
     z-index: 2;
-    color: blue;
     color: #4A5056;
     pointer-events: none;
-    background: #fff;
+    background: #FFF;
     border-radius: 5px;
     border: 1px solid #CFD4D9;
     padding: 5px;
@@ -65,16 +98,25 @@ body {
 }
 
 .selected {
-    background: #71815f;
-    color: #fff;
+    background: #71815F;
+    color: #FFF;
 }
 
-#PDFCanvas {
+.trash-hover {
+    background: #FF0000 !important;
+    color: #FFF !important;
+}
+
+/*====================================================================================================
+4. Canvas.
+====================================================================================================*/
+
+#canvas {
     position: absolute;
     top: 0;
     left: 0;
     z-index: 1;
-    border: 1px solid #aaa;
+    border: 1px solid #AAA;
     margin: 0px auto;
-    background: #fff;
+    background: #FFF;
 }
