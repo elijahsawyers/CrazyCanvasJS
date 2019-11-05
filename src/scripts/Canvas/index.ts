@@ -34,8 +34,8 @@ export default class Canvas {
     /** 
      * Creates a canvas with an image to draw points and connections between points.
      *
-     * @param {HTMLCanvasElement} canvas: The HTML canvas to draw onto.
-     * @param {CanvasImage} image: The image to draw onto the canvas.
+     * @param canvas: The HTML canvas to draw onto.
+     * @param image: The image to draw onto the canvas.
      */
     constructor(public canvas: HTMLCanvasElement, public image: CanvasImage) {
         this.ctx = <CanvasRenderingContext2D>canvas.getContext('2d');
@@ -66,8 +66,8 @@ export default class Canvas {
     /**
      * Converts a point in the canvas to the corresponding ctx grid point.
      *
-     * @param {number} x: The x-value of the canvas point.
-     * @param {number} y: The y-value of the canvas point.
+     * @param x: The x-value of the canvas point.
+     * @param y: The y-value of the canvas point.
      */
     canvasPointToCtxPoint(x: number, y: number): Coordinate {
         let t = this.ctx.getTransform();
@@ -101,7 +101,7 @@ export default class Canvas {
     /**
      * Draws a point onto the canvas.
      *
-     * @param {CanvasPoint} point:
+     * @param point: The point to draw onto the canvas.
      */
     drawPoint(point: CanvasPoint): void {
         this.ctx.beginPath();
@@ -120,8 +120,8 @@ export default class Canvas {
     /**
      * Draws a connection onto the canvas between two points.
      * 
-     * @param {CanvasPoint} pointA:
-     * @param {CanvasPoint} pointB:
+     * @param pointA: The first point in the connection.
+     * @param pointB: The second point in the connection.
      */
     drawConnection(pointA: CanvasPoint, pointB: CanvasPoint): void {
         this.ctx.beginPath();
@@ -143,6 +143,14 @@ export default class Canvas {
         );
     }
 
+    /**
+     * Pan the canvas' ctx by mouseMovement x and y. Note: The mouse movement is
+     * multiplied by some factor to keep the pan speed from getting extremely
+     * fast when the canvas is zoomed in.
+     *
+     * @param mouseMovementX: The x-movement of the cursor.
+     * @param mouseMovementY: The y-movement of the cursor.
+     */
     pan(mouseMovementX: number, mouseMovementY: number): void {
         this.ctx.translate(
             mouseMovementX / this.ctx.getTransform().a,
@@ -151,6 +159,13 @@ export default class Canvas {
         this.redraw();
     }
 
+    /**
+     * Zooms the canvas' ctx. If the mouseScrollDelta is positive, the canvas' ctx
+     * is scaled by 1.05 (zoom in). If the mouseScrollDelta is negative, the canvas'
+     * ctx is scaled by 0.95 (zoom out).
+     *
+     * @param mouseScrollDelta: The mouse scroll delta of a scroll event.
+     */
     zoom(mouseScrollDelta: number): void {
         const scale = (mouseScrollDelta > 0) ? 1.05 : 0.95;
 
@@ -174,6 +189,13 @@ export default class Canvas {
         this.redraw();
     }
 
+    /**
+     * Determines whether or not a mouse click (in canvas units) is on a point in the canvas.
+     * If so, the point is returned; otherwise, null is returned.
+     *
+     * @param mouseClickX: The x coordinate of a mouse click.
+     * @param mouseClickY: The y coordinate of a mouse click.
+     */
     clickOnPoint(mouseClickX: number, mouseClickY: number): CanvasPoint | null {
         let cursorCtxPoint = this.canvasPointToCtxPoint(mouseClickX, mouseClickY);
 
@@ -188,10 +210,22 @@ export default class Canvas {
         return null;
     }
 
+    /**
+     * Adds a point to the canvas. Note: must redraw the canvas to see the point.
+     *
+     * @param point: The point to draw on the canvas.
+     */
     addPoint(point: CanvasPoint): void {
         this.points.push(point);
     }
 
+    /**
+     * Removes a point from the canvas, including removing it from all other points
+     * list of connections, if needed. Note: must redraw the canvas to see the point
+     * be removed.
+     *
+     * @param pointToDelete: The point to delete from the canvas.
+     */
     deletePoint(pointToDelete: CanvasPoint): void {
         this.points = this.points.filter((point) => point != pointToDelete);
         this.points.forEach((point) => {
