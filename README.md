@@ -1,15 +1,60 @@
 # CrazyCanvasJS
 
-Draw images, points, and lines onto a canvas with the ability to pan around and zoom.
+> CrazyCanvasJS is a simple web application that allows users to draw onto a canvas using points and connections.
 
-## Prerequisites
+## Table of Contents
 
-Ensure that you are running this in a modern web browser, and because the JavaScript code is using ES6 imports and exports, you'll need to setup a local server. I recommend using [http-server](https://www.npmjs.com/package/http-server).
+* [Getting&nbsp;started](#Getting-started)
+* [Setup](#Setup)
+* [Running&nbsp;the&nbsp;app](#Running-the-app)
+* [Demo](#Demo)
+* [License](#License)
+* [Authors](#Authors)
 
-## Build With
+## Getting started
 
-* [HTML Canvas](https://developer.mozilla.org/en-US/docs/Glossary/Canvas)
+Clone the repository:
+```sh
+git clone https://github.com/elijahsawyers/CrazyCanvasJS.git
+```
+
+Install all dependencies:
+```sh
+npm install
+```
+
+## Setup
+
+Build the project:
+```sh
+gulp build
+```
+
+## Running the app
+
+To run the server:
+```sh
+gulp connect
+```
+
+During development, it's best to use the default gulp task because it listens for changes to src files and updates the distribution accordingly:
+
+```sh
+gulp
+```
+
+## Demo 
+
+Checkout the demo below!
+
+<p align="center">
+    <img src="https://raw.githubusercontent.com/elijahsawyers/CrazyCanvasJS/master/Demo.gif"
+        alt="Demo"/>
+</p>
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Authors
-
 * [Elijah Sawyers](https://github.com/elijahsawyers)
