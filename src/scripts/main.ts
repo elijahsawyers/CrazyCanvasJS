@@ -61,6 +61,12 @@ import CanvasState from './Canvas/CanvasState';
         }
     }
 
+    /* Unlatch from a point when the mouse leaves the canvas. */
+    canvasHTMLElement.onmouseleave = (e: MouseEvent) => {
+        canvas.latched = false;
+        canvas.latchedPoint = null;
+    };
+
     /*
      * When the mouse is moved on the canvas:
      * 
